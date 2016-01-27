@@ -2,8 +2,13 @@ package ir.assignments.three;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -26,37 +31,70 @@ public class Crawler extends WebCrawler {
 	 * This methods performs a crawl starting at the specified seed URL. Returns
 	 * a collection containing all URLs visited during the crawl.
 	 */
+		
+	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
+	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg|png|mp3|mp3|zip|gz))$");
+	private final static String CRAWL_STORAGE_FOLDER = "data";//path to to store data, made final for easy changing
+	private final static int NUMBER_OF_CRAWLERS = 7;
+
+	private static ArrayList<String> tokens = new ArrayList<String>();//Create new Array list to hold tokens
+	private final static Pattern replaceRegexPattern = Pattern.compile("[^A-Za-z0-9]+");//Pre-compile Regex for small speed up
+	
+	//Added to store visited urls.
+	private static Set<String> hiturls; 
+	private static Map<String, Integer> subDomains;
 	
 	//main added for testing.
 	public static void main(String [] args){
 		try {
+			long startTime = System.currentTimeMillis();
 			PrintWriter out = new PrintWriter("Visited.txt");
-			for(String s : crawl("http://www.ics.uci.edu/")){
+			for(String s : crawl("http://www.ics.uci.edu/~smcthoma")){
 				out.println(s);
 			}
+			out.close();
+			
+			out = new PrintWriter("Subdomains.txt");
+			ArrayList <String> keys = new ArrayList<String>(subDomains.keySet());
+			Collections.sort(keys);
+			for(String key : keys)
+			{
+				out.println(key + ", " + subDomains.get(key));
+			}
+			out.close();
+			out = new PrintWriter("answers.txt");
+			out.println("1. It took " + (System.currentTimeMillis()-startTime)/1000.0 + " seconds to crawl the domain." );
+			out.println("2. There are " + hiturls.size() + " unique url crawled in this domain." );
+			out.println("3. There are " + subDomains.size() + " unique subdomains crawled(see Subdomains.txt).");
+			out.close();
+			
+			List<Frequency> sortedFreqCount = WordFrequencyCounter.computeWordFrequencies(tokens);
+			out = new PrintWriter("CommonWords.txt");
+			
+			for(int i = 0; i< 500; i++)
+				out.println(sortedFreqCount.get(i).toString().replaceAll(",", "\n").replace("[", "").replace("]", ""));
+
 			out.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 	}
 	
 	//majority of code taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
 	public static Collection<String> crawl(String seedURL) throws Exception {
-		// TODO implement me
-		hiturls.clear();
-		
-		String crawlStorageFolder = "/Users/shaun/OneDrive/Documents/School/UCI/CS 121/Java Workspace/CS-121-Crawler/Assignment 3/data";//"data/crawl/root";
-        int numberOfCrawlers = 7;
+		hiturls = new HashSet<String>();
+		subDomains = new HashMap<String, Integer>();
 
         CrawlConfig config = new CrawlConfig();
-        config.setCrawlStorageFolder(crawlStorageFolder);
+        config.setCrawlStorageFolder(CRAWL_STORAGE_FOLDER);
         
         //Specific Settings for Project
-        config.setPolitenessDelay(1000);
+        config.setPolitenessDelay(600);
         config.setUserAgentString("UCI Inf141-CS121 crawler 82425468 24073320 13828643");
         config.setMaxPagesToFetch(1000);
-        config.setMaxDepthOfCrawling(1);
+        config.setMaxDepthOfCrawling(2);
         
         /*
          * Instantiate the controller for this crawl.
@@ -77,13 +115,11 @@ public class Crawler extends WebCrawler {
          * Start the crawl. This is a blocking operation, meaning that your code
          * will reach the line after this only when crawling is finished.
          */
-        controller.start(Crawler.class, numberOfCrawlers);
+        controller.start(Crawler.class, NUMBER_OF_CRAWLERS);
 		
 		return hiturls;
 	}
 
-	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
-	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg" + "|png|mp3|mp3|zip|gz))$");
 
 	/**
 	 * This method receives two parameters. The first parameter is the page in
@@ -95,15 +131,14 @@ public class Crawler extends WebCrawler {
 	 * "http://www.ics.uci.edu/". In this case, we didn't need the referringPage
 	 * parameter to make the decision.
 	 */
-	
-	
-	//Added to store visited urls.
-	public static List<String> hiturls = new ArrayList<String>();
-	
-	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
 	@Override
 	public boolean shouldVisit(Page referringPage, WebURL url) {
 		String href = url.getURL().toLowerCase();
+		
+		/** TODO DELETE DEBUG */
+		System.out.println("<!--- SITE TO VISIT" + href + "--->" + "AND BOOLEAN TOVISIT= " 
+		+ (!FILTERS.matcher(href).matches() && href.startsWith("http://www.ics.uci.edu/")));
+		
 		return !FILTERS.matcher(href).matches() && href.startsWith("http://www.ics.uci.edu/");
 	}
 
@@ -114,21 +149,32 @@ public class Crawler extends WebCrawler {
 	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
 	@Override
 	public void visit(Page page) {
-		String url = page.getWebURL().getURL();
-		System.out.println("URL: " + url);
-		
+		WebURL currentUrl = page.getWebURL();
+		System.out.println(currentUrl.getURL());
 		//not taken
-		hiturls.add(url);
+		hiturls.add(currentUrl.getURL());
+		String subDomain = currentUrl.getSubDomain();
+		
+		if(!subDomains.containsKey(subDomain))
+			subDomains.put(subDomain, 1);
+		else
+		{
+			System.out.println(subDomain + " Hit! count :" +  (subDomains.get(subDomain)+1));
+			subDomains.put(subDomain, subDomains.get(subDomain)+1) ; 
+		}	
 
 		if (page.getParseData() instanceof HtmlParseData) {
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 			String text = htmlParseData.getText();
-			String html = htmlParseData.getHtml();
-			Set<WebURL> links = htmlParseData.getOutgoingUrls();
-
-			System.out.println("Text length: " + text.length());
-			System.out.println("Html length: " + html.length());
-			System.out.println("Number of outgoing links: " + links.size());
+			tokenizeText(text);
 		}
+	
+	}
+	
+	public static void tokenizeText(String input) {
+		input = replaceRegexPattern.matcher(input.toLowerCase()).replaceAll(" ").trim();//Change case to lower and remove all non word charters
+		tokens.addAll(Arrays.asList(input.split(" ")));//split line on spaces and add to tokens
+		tokens.remove("");//remove empty string
+
 	}
 }
