@@ -1,14 +1,15 @@
 package ir.assignments.three;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -44,9 +45,18 @@ public class Crawler extends WebCrawler {
 	private static Set<String> hiturls; 
 	private static Map<String, Integer> subDomains;
 	
+	private static HashSet<String> stopwords = new HashSet<String>();
+	
 	//main added for testing.
 	public static void main(String [] args){
 		try {
+			Scanner in = new Scanner(new File("stopwords"));
+			while(in.hasNext()){
+				stopwords.add(in.nextLine().trim().toLowerCase());
+			}
+			in.close();
+			System.out.println(stopwords.size());
+			
 			long startTime = System.currentTimeMillis();
 			PrintWriter out = new PrintWriter("Visited.txt");
 			for(String s : crawl("http://www.ics.uci.edu/~smcthoma")){
@@ -188,7 +198,8 @@ public class Crawler extends WebCrawler {
 			if(s.length()<=0)
 				continue;
 			++ctr;
-			tokens.add(s);
+			if(!stopwords.contains(s))
+				tokens.add(s);
 		}
 		return ctr;
 	}
