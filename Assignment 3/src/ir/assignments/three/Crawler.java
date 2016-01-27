@@ -54,7 +54,7 @@ public class Crawler extends WebCrawler {
         
         //Specific Settings for Project
         config.setPolitenessDelay(1000);
-        config.setUserAgentString("UCI Inf141-CS121 crawler 82425468 (letzer's here) (shaun's here)");
+        config.setUserAgentString("UCI Inf141-CS121 crawler 82425468 24073320 13828643");
         config.setMaxPagesToFetch(1000);
         config.setMaxDepthOfCrawling(1);
         
