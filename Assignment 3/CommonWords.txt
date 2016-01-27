@@ -279,6 +279,7 @@ most:18
 option:18
 researchers:18
 take:18
+12:17
 advancement:17
 do:17
 fall:17
@@ -288,7 +289,6 @@ security:17
 three:17
 total:17
 tsudik:17
-12:16
 apply:16
 artificial:16
 between:16

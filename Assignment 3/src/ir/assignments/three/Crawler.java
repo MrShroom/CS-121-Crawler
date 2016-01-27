@@ -66,6 +66,7 @@ public class Crawler extends WebCrawler {
 			out.println("1. It took " + (System.currentTimeMillis()-startTime)/1000.0 + " seconds to crawl the domain." );
 			out.println("2. There are " + hiturls.size() + " unique url crawled in this domain." );
 			out.println("3. There are " + subDomains.size() + " unique subdomains crawled(see Subdomains.txt).");
+			out.println("4. Longest Page: " + mostWordsUrl + " with " + bestWordCount + " words");
 			out.close();
 			
 			List<Frequency> sortedFreqCount = WordFrequencyCounter.computeWordFrequencies(tokens);
@@ -146,6 +147,11 @@ public class Crawler extends WebCrawler {
 	 * This function is called when a page is fetched and ready to be processed
 	 * by your program.
 	 */
+	
+	
+	static String mostWordsUrl = "None";
+	static int bestWordCount = 0;
+	
 	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
 	@Override
 	public void visit(Page page) {
@@ -166,15 +172,24 @@ public class Crawler extends WebCrawler {
 		if (page.getParseData() instanceof HtmlParseData) {
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 			String text = htmlParseData.getText();
-			tokenizeText(text);
+			int wordCount = tokenizeText(text);
+			if(wordCount > bestWordCount){
+				mostWordsUrl = currentUrl.getURL();
+				bestWordCount = wordCount;
+			}
 		}
 	
 	}
 	
-	public static void tokenizeText(String input) {
+	public static int tokenizeText(String input) {
 		input = replaceRegexPattern.matcher(input.toLowerCase()).replaceAll(" ").trim();//Change case to lower and remove all non word charters
-		tokens.addAll(Arrays.asList(input.split(" ")));//split line on spaces and add to tokens
-		tokens.remove("");//remove empty string
-
+		int ctr = 0;
+		for(String s : input.split(" ")){
+			if(s.length()<=0)
+				continue;
+			++ctr;
+			tokens.add(s);
+		}
+		return ctr;
 	}
 }

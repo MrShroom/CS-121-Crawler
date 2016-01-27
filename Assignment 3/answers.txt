@@ -1,3 +1,4 @@
-1. It took 73.961 seconds to crawl the domain.
+1. It took 71.532 seconds to crawl the domain.
 2. There are 56 unique url crawled in this domain.
 3. There are 1 unique subdomains crawled(see Subdomains.txt).
+4. Longest Page: http://www.ics.uci.edu/community/news/notes/index.php with 2782 words
