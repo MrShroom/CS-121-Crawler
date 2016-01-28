@@ -36,7 +36,7 @@ public class Crawler extends WebCrawler {
 	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg|png|mp3|mp3|zip|gz))$");
 	private final static String CRAWL_STORAGE_FOLDER = "data";//path to to store data, made final for easy changing
-	private final static int NUMBER_OF_CRAWLERS = 7;
+	private final static int NUMBER_OF_CRAWLERS = Runtime.getRuntime().availableProcessors();
 
 	private static ArrayList<String> tokens = new ArrayList<String>();//Create new Array list to hold tokens
 	private final static Pattern replaceRegexPattern = Pattern.compile("[^A-Za-z0-9]+");//Pre-compile Regex for small speed up
