@@ -1,6 +1,7 @@
 package ir.assignments.three;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,32 +38,40 @@ public class Crawler extends WebCrawler {
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg|png|mp3|mp3|zip|gz))$");
 	private final static String CRAWL_STORAGE_FOLDER = "data";//path to to store data, made final for easy changing
 	private final static int NUMBER_OF_CRAWLERS = Runtime.getRuntime().availableProcessors()*2;
-
 	private final static Pattern replaceRegexPattern = Pattern.compile("[^A-Za-z0-9]+");//Pre-compile Regex for small speed up
 	
-	//Added to store visited urls.
 	private static Set<String> hiturls; 
 	private static Map<String, Integer> subDomains;
 	private static WordFrequencyCounter myCounter;
 	private static HashSet<String> stopwords = new HashSet<String>();
-	
-	//main added for testing.
-	public static void main(String [] args){
-		try {
+	private static String mostWordsUrl = "None";
+	private static int bestWordCount = 0;
+	private static PrintWriter indexToUrl; 
+
+	public static void main(String [] args)
+	{
+		try 
+		{
+			//Create set of stop words from file "stopwords"
 			Scanner in = new Scanner(new File("stopwords"));
-			while(in.hasNext()){
+			while(in.hasNext())
+			{
 				stopwords.add(in.nextLine().trim().toLowerCase());
 			}
 			in.close();
-			System.out.println(stopwords.size());
+			
 			
 			long startTime = System.currentTimeMillis();
 			myCounter = new WordFrequencyCounter();
+			
 			PrintWriter out = new PrintWriter("Visited.txt");
-			for(String s : crawl("http://www.ics.uci.edu/~smcthoma")){
+			indexToUrl = new PrintWriter("UrlMapIndex.txt");
+			for(String s : crawl("http://www.ics.uci.edu/"))
+			{
 				out.println(s);
 			}
 			out.close();
+			indexToUrl.close();
 			
 			out = new PrintWriter("Subdomains.txt");
 			ArrayList <String> keys = new ArrayList<String>(subDomains.keySet());
@@ -72,11 +81,14 @@ public class Crawler extends WebCrawler {
 				out.println(key + ", " + subDomains.get(key));
 			}
 			out.close();
+			
+			
 			out = new PrintWriter("answers.txt");
 			out.println("1. It took " + (System.currentTimeMillis()-startTime)/1000.0 + " seconds to crawl the domain." );
 			out.println("2. There are " + hiturls.size() + " unique url crawled in this domain." );
-			out.println("3. There are " + subDomains.size() + " unique subdomains crawled(see Subdomains.txt).");
+			out.println("3. There are " + subDomains.size() + " unique subdomains crawled(see \"Subdomains.txt\").");
 			out.println("4. Longest Page: " + mostWordsUrl + " with " + bestWordCount + " words");
+			out.println("5. Please see file\"CommonWords.txt\" ");
 			out.close();
 			
 			List<Frequency> sortedFreqCount = myCounter.returnSortedCounts();
@@ -84,17 +96,19 @@ public class Crawler extends WebCrawler {
 			
 			for(int i = 0; i< 500; i++)
 				out.println(sortedFreqCount.get(i).toString().replaceAll(",", "\n").replace("[", "").replace("]", ""));
-
 			out.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+		
+		} 
+		catch (Exception e) 
+		{
 			e.printStackTrace();
 		}
 		
 	}
 	
 	//majority of code taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
-	public static Collection<String> crawl(String seedURL) throws Exception {
+	public static Collection<String> crawl(String seedURL) throws Exception 
+	{
 		hiturls = new HashSet<String>();
 		subDomains = new HashMap<String, Integer>();
 
@@ -104,8 +118,10 @@ public class Crawler extends WebCrawler {
         //Specific Settings for Project
         config.setPolitenessDelay(600);
         config.setUserAgentString("UCI Inf141-CS121 crawler 82425468 24073320 13828643");
-        config.setMaxPagesToFetch(1000);
-        config.setMaxDepthOfCrawling(2);
+        config.setMaxPagesToFetch(-1);
+        config.setMaxDepthOfCrawling(-1);
+        config.setIncludeBinaryContentInCrawling(false);
+        config.setResumableCrawling(false);
         
         /*
          * Instantiate the controller for this crawl.
@@ -147,10 +163,10 @@ public class Crawler extends WebCrawler {
 		String href = url.getURL().toLowerCase();
 		
 		/** TODO DELETE DEBUG */
-		System.out.println("<!--- SITE TO VISIT" + href + "--->" + "AND BOOLEAN TOVISIT= " 
-		+ (!FILTERS.matcher(href).matches() && href.startsWith("http://www.ics.uci.edu/")));
+//		System.out.println("<!--- SITE TO VISIT" + href + "--->" + "AND BOOLEAN TOVISIT= " 
+//		+ (!FILTERS.matcher(href).matches() && href.startsWith("ics.uci.edu/")));
 		
-		return !FILTERS.matcher(href).matches() && href.startsWith("http://www.ics.uci.edu/");
+		return !FILTERS.matcher(href).matches() && href.contains("ics.uci.edu") && href.contains("http://");
 	}
 
 	/**
@@ -159,15 +175,14 @@ public class Crawler extends WebCrawler {
 	 */
 	
 	
-	static String mostWordsUrl = "None";
-	static int bestWordCount = 0;
+
 	
 	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
 	@Override
 	public void visit(Page page) {
+
 		WebURL currentUrl = page.getWebURL();
-		System.out.println(currentUrl.getURL());
-		//not taken
+//		System.out.println(currentUrl.getURL());
 		hiturls.add(currentUrl.getURL());
 		String subDomain = currentUrl.getSubDomain();
 		
@@ -175,17 +190,27 @@ public class Crawler extends WebCrawler {
 			subDomains.put(subDomain, 1);
 		else
 		{
-			System.out.println(subDomain + " Hit! count :" +  (subDomains.get(subDomain)+1));
+//			System.out.println(subDomain + " Hit! count :" +  (subDomains.get(subDomain)+1));
 			subDomains.put(subDomain, subDomains.get(subDomain)+1) ; 
 		}	
 
-		if (page.getParseData() instanceof HtmlParseData) {
-			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-			String text = htmlParseData.getText();
-			int wordCount = tokenizeText(text);
-			if(wordCount > bestWordCount){
-				mostWordsUrl = currentUrl.getURL();
-				bestWordCount = wordCount;
+		if (page.getParseData() instanceof HtmlParseData) 
+		{
+			try {
+				PrintWriter out = new PrintWriter("data/pageText/"+hiturls.size() + ".txt");
+				indexToUrl.println(hiturls.size() + "\t," + currentUrl.getURL());
+				HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
+				String text = htmlParseData.getText();
+				out.append(text);
+				int wordCount = tokenizeText(text);
+				if(wordCount > bestWordCount){
+					mostWordsUrl = currentUrl.getURL();
+					bestWordCount = wordCount;
+				}
+				out.close();
+			} catch (FileNotFoundException e) 
+			{
+				e.printStackTrace();
 			}
 		}
 	
