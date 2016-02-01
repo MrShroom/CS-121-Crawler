@@ -166,7 +166,7 @@ public class Crawler extends WebCrawler {
 //		System.out.println("<!--- SITE TO VISIT" + href + "--->" + "AND BOOLEAN TOVISIT= " 
 //		+ (!FILTERS.matcher(href).matches() && href.startsWith("ics.uci.edu/")));
 		
-		return !FILTERS.matcher(href).matches() && href.contains("ics.uci.edu") && href.contains("http://");
+		return !FILTERS.matcher(href).matches() && href.contains("ics.uci.edu") && href.contains("http://") && !hiturls.contains(href);
 	}
 
 	/**
