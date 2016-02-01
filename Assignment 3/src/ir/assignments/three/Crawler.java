@@ -36,15 +36,14 @@ public class Crawler extends WebCrawler {
 	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
 	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg|png|mp3|mp3|zip|gz))$");
 	private final static String CRAWL_STORAGE_FOLDER = "data";//path to to store data, made final for easy changing
-	private final static int NUMBER_OF_CRAWLERS = Runtime.getRuntime().availableProcessors();
+	private final static int NUMBER_OF_CRAWLERS = Runtime.getRuntime().availableProcessors()*2;
 
-	private static ArrayList<String> tokens = new ArrayList<String>();//Create new Array list to hold tokens
 	private final static Pattern replaceRegexPattern = Pattern.compile("[^A-Za-z0-9]+");//Pre-compile Regex for small speed up
 	
 	//Added to store visited urls.
 	private static Set<String> hiturls; 
 	private static Map<String, Integer> subDomains;
-	
+	private static WordFrequencyCounter myCounter;
 	private static HashSet<String> stopwords = new HashSet<String>();
 	
 	//main added for testing.
@@ -58,6 +57,7 @@ public class Crawler extends WebCrawler {
 			System.out.println(stopwords.size());
 			
 			long startTime = System.currentTimeMillis();
+			myCounter = new WordFrequencyCounter();
 			PrintWriter out = new PrintWriter("Visited.txt");
 			for(String s : crawl("http://www.ics.uci.edu/~smcthoma")){
 				out.println(s);
@@ -79,7 +79,7 @@ public class Crawler extends WebCrawler {
 			out.println("4. Longest Page: " + mostWordsUrl + " with " + bestWordCount + " words");
 			out.close();
 			
-			List<Frequency> sortedFreqCount = WordFrequencyCounter.computeWordFrequencies(tokens);
+			List<Frequency> sortedFreqCount = myCounter.returnSortedCounts();
 			out = new PrintWriter("CommonWords.txt");
 			
 			for(int i = 0; i< 500; i++)
@@ -193,6 +193,7 @@ public class Crawler extends WebCrawler {
 	
 	public static int tokenizeText(String input) {
 		input = replaceRegexPattern.matcher(input.toLowerCase()).replaceAll(" ").trim();//Change case to lower and remove all non word charters
+		ArrayList<String> tokens = new ArrayList<String>();//Create new Array list to hold tokens
 		int ctr = 0;
 		for(String s : input.split(" ")){
 			if(s.length()<=0)
@@ -201,6 +202,7 @@ public class Crawler extends WebCrawler {
 			if(!stopwords.contains(s))
 				tokens.add(s);
 		}
+		myCounter.addOrIncrementCounters(tokens);
 		return ctr;
 	}
 }

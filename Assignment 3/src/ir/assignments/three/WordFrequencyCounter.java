@@ -2,7 +2,6 @@ package ir.assignments.three;
 
 import ir.assignments.three.Frequency;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,10 +13,14 @@ import java.util.Map;
  * Counts the total number of words and their frequencies in a text file.
  */
 public final class WordFrequencyCounter {
+	
+	private	Map<String, Frequency> holder = new HashMap<String, Frequency>();//a Map to hold pairing of word to Frequency
+	
 	/**
-	 * This class should not be instantiated.
+	 * This class should be instantiated.
 	 */
-	private WordFrequencyCounter() {}
+	public WordFrequencyCounter() {}
+	
 	
 	/**
 	 * Takes the input list of words and processes it, returning a list
@@ -46,12 +49,9 @@ public final class WordFrequencyCounter {
 	 * @param words A list of words.
 	 * @return A list of word frequencies, ordered by decreasing frequency.
 	 */
-	public static List<Frequency> computeWordFrequencies(List<String> words) 
+	public void addOrIncrementCounters(List<String> words) 
 	{
-		if(words == null || words.isEmpty())//handle empty lists
-			return new ArrayList<Frequency>();
 		
-		Map<String, Frequency> holder = new HashMap<String, Frequency>();//a Map to hold pairing of word to Frequency
 		for(String word : words)
 		{
 			if(holder.containsKey(word))
@@ -63,6 +63,14 @@ public final class WordFrequencyCounter {
 				holder.put(word,  new Frequency(word,1));
 			}
 		}
+	}
+
+
+	public List<Frequency> returnSortedCounts() {
+		
+		if(holder == null || holder.isEmpty())//handle empty lists
+			return new ArrayList<Frequency>();
+		
 		List<Frequency> output = new ArrayList<Frequency>( holder.values());
 		class FrequencyComparer implements Comparator<Frequency>
 		{
