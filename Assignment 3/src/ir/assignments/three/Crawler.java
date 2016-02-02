@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,10 +39,13 @@ public class Crawler extends WebCrawler {
 	private final static Pattern FILTERS = Pattern.compile(".*calendar.*"+
 											"|(.*(\\.(css|js|gif|jpe?g|png|mp2|mp3|zip|gz|exe|dll"+
 											"|bin|tar|pdf|mid|wav|avi|mov|mpeg|ram|m4v|rm|smil"+
-											"|wmv|swf|wma|rar|bmp|tiff?))$)");
+											"|wmv|swf|wma|rar|bmp|tiff?|pptx?|docx?|jemdoc|odp|ps|"+
+											"uai|thmx|xmlx?|mso|))$)");
+	
 	private final static String CRAWL_STORAGE_FOLDER = "data";//path to to store data, made final for easy changing
 	private final static int NUMBER_OF_CRAWLERS = 1;//only need one crawler because we don't leave the ICS domain
 	private final static Pattern replaceRegexPattern = Pattern.compile("[^A-Za-z0-9]+");//Pre-compile Regex for small speed up
+	private final static Pattern singleQoute = Pattern.compile("\'|`");//Pre-compile Regex for small speed up
 	
 	private static Set<String> hiturls; 
 	private static Map<String, Integer> subDomains;
@@ -59,8 +63,9 @@ public class Crawler extends WebCrawler {
 			Scanner in = new Scanner(new File("stopwords"));
 			while(in.hasNext())
 			{
-				stopwords.add(in.nextLine().trim().toLowerCase());
+				stopwords.add(singleQoute.matcher(in.nextLine().trim().toLowerCase()).replaceAll(""));
 			}
+			stopwords.add("");
 			in.close();
 			
 			
@@ -69,7 +74,7 @@ public class Crawler extends WebCrawler {
 			
 			PrintWriter out = new PrintWriter("Visited.txt");
 			indexToUrl = new PrintWriter("UrlMapIndex.txt");
-			for(String s : crawl("http://www.ics.uci.edu/"))
+			for(String s : crawl("http://www.ics.uci.edu"))
 			{
 				out.println(s);
 			}
@@ -97,7 +102,7 @@ public class Crawler extends WebCrawler {
 			List<Frequency> sortedFreqCount = myCounter.returnSortedCounts();
 			out = new PrintWriter("CommonWords.txt");
 			
-			for(int i = 0; i< 500; i++)
+			for(int i = 0; i< 500 && i < sortedFreqCount.size(); i++)
 				out.println(sortedFreqCount.get(i).toString().replaceAll(",", "\n").replace("[", "").replace("]", ""));
 			out.close();
 		
@@ -225,16 +230,18 @@ public class Crawler extends WebCrawler {
 	}
 	
 	public static int tokenizeText(String input) {
+		input = singleQoute.matcher(input).replaceAll("").trim();
 		input = replaceRegexPattern.matcher(input.toLowerCase()).replaceAll(" ").trim();//Change case to lower and remove all non word charters
-		ArrayList<String> tokens = new ArrayList<String>();//Create new Array list to hold tokens
-		int ctr = 0;
-		for(String s : input.split(" ")){
-			if(s.length()<=0)
-				continue;
-			++ctr;
-			if(!stopwords.contains(s))
-				tokens.add(s);
-		}
+		ArrayList<String> tokens = new ArrayList<String>(Arrays.asList(input.split(" ")));//Create new Array list to hold tokens
+		int ctr = tokens.size();
+		tokens.removeAll(stopwords);
+//		for(String s : input.split(" ")){
+//			if(s.length()<=0)
+//				continue;
+//			++ctr;
+//			if(!stopwords.contains(s))
+//				tokens.add(s);
+//		}
 		myCounter.addOrIncrementCounters(tokens);
 		return ctr;
 	}
