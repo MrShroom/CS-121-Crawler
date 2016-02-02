@@ -35,9 +35,12 @@ public class Crawler extends WebCrawler {
 	 */
 		
 	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
-	private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg|png|mp3|mp3|zip|gz))$");
+	private final static Pattern FILTERS = Pattern.compile(".*calendar.*"+
+											"|(.*(\\.(css|js|gif|jpe?g|png|mp2|mp3|zip|gz|exe|dll"+
+											"|bin|tar|pdf|mid|wav|avi|mov|mpeg|ram|m4v|rm|smil"+
+											"|wmv|swf|wma|rar|bmp|tiff?))$)");
 	private final static String CRAWL_STORAGE_FOLDER = "data";//path to to store data, made final for easy changing
-	private final static int NUMBER_OF_CRAWLERS = Runtime.getRuntime().availableProcessors()*2;
+	private final static int NUMBER_OF_CRAWLERS = 1;//only need one crawler because we don't leave the ICS domain
 	private final static Pattern replaceRegexPattern = Pattern.compile("[^A-Za-z0-9]+");//Pre-compile Regex for small speed up
 	
 	private static Set<String> hiturls; 
@@ -119,7 +122,7 @@ public class Crawler extends WebCrawler {
         config.setPolitenessDelay(600);
         config.setUserAgentString("UCI Inf141-CS121 crawler 82425468 24073320 13828643");
         config.setMaxPagesToFetch(-1);
-        config.setMaxDepthOfCrawling(-1);
+        config.setMaxDepthOfCrawling(32767);
         config.setIncludeBinaryContentInCrawling(false);
         config.setResumableCrawling(false);
         
@@ -162,11 +165,15 @@ public class Crawler extends WebCrawler {
 	public boolean shouldVisit(Page referringPage, WebURL url) {
 		String href = url.getURL().toLowerCase();
 		
-		/** TODO DELETE DEBUG */
-//		System.out.println("<!--- SITE TO VISIT" + href + "--->" + "AND BOOLEAN TOVISIT= " 
-//		+ (!FILTERS.matcher(href).matches() && href.startsWith("ics.uci.edu/")));
+		/** TODO DELETE DEBUG */ 
+		System.out.println("<!--- SITE TO VISIT " + href + " --->" + "AND BOOLEAN TOVISIT= " 
+		+ (!FILTERS.matcher(href).matches() && href.contains("ics.uci.edu") && href.contains("http://") 
+		&& !hiturls.contains(href)));
 		
-		return !FILTERS.matcher(href).matches() && href.contains("ics.uci.edu") && href.contains("http://") && !hiturls.contains(href);
+		return !FILTERS.matcher(href).matches()//skip file that match preset filters 
+				&& href.contains("ics.uci.edu")//stay in ics.uci.edu
+				&& href.contains("http://")//only follow http://(i.e.  avoid https, ftp, file,...)
+				&& !hiturls.contains(href);//skip seen sites. 
 	}
 
 	/**
@@ -182,7 +189,7 @@ public class Crawler extends WebCrawler {
 	public void visit(Page page) {
 
 		WebURL currentUrl = page.getWebURL();
-//		System.out.println(currentUrl.getURL());
+		System.out.println("############## Current URL!:: "+ currentUrl.getURL());
 		hiturls.add(currentUrl.getURL());
 		String subDomain = currentUrl.getSubDomain();
 		
@@ -199,6 +206,7 @@ public class Crawler extends WebCrawler {
 			try {
 				PrintWriter out = new PrintWriter("data/pageText/"+hiturls.size() + ".txt");
 				indexToUrl.println(hiturls.size() + "\t," + currentUrl.getURL());
+				indexToUrl.flush();
 				HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 				String text = htmlParseData.getText();
 				out.append(text);

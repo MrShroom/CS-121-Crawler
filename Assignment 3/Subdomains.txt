@@ -1,3 +1,0 @@
-calendar.ics, 1
-www.ics, 54
-www.informatics, 1
