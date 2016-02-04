@@ -19,6 +19,9 @@ public class DataBaseCrawlerFunctions
 	public static void recover(boolean resumable)
 	{
 		Connection dBConnects = setMySQLDB();
+		Statement st = null;
+        ResultSet rs = null;
+        
 		String statement = "INSERT INTO Timing (RunTime) VALUES ( 0 );";
 		try 
 		{
@@ -28,7 +31,15 @@ public class DataBaseCrawlerFunctions
 				dBConnects.createStatement().executeUpdate("TRUNCATE TABLE WordFreq;");
 				dBConnects.createStatement().executeUpdate("TRUNCATE TABLE Timing;");
 			}
-			currentRun = dBConnects.createStatement().executeUpdate(statement);
+			dBConnects.createStatement().executeUpdate(statement);
+			statement = "SELECT max(RunNumber) FROM Timing;";
+			
+			st = dBConnects.createStatement();
+			rs = st.executeQuery(statement);
+			if (rs.next()) 
+			{
+				currentRun = rs.getInt(1);				
+			}
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();
@@ -60,6 +71,7 @@ public class DataBaseCrawlerFunctions
         int subDomains = 0;
         String statement = " SELECT SubDomain, COUNT(*) " +
         					"FROM Visited_URL "+
+        					"GROUP BY SubDomain " + 
         					"ORDER BY SubDomain; ";
         try 
         {
