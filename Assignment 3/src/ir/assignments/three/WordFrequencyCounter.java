@@ -58,6 +58,7 @@ public final class WordFrequencyCounter {
 			try 
 			{
 				dBConnects.createStatement().executeUpdate(statement);
+				dBConnects.close();
 			} catch (SQLException e) 
 			{
 				e.printStackTrace();
@@ -82,6 +83,7 @@ public final class WordFrequencyCounter {
 			{
 				output.add(new Frequency(rs.getString("Word"), rs.getInt("Freq")));
 			}
+			dBConnects.close();
 			
 		} catch (SQLException e) 
         {
