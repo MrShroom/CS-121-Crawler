@@ -40,10 +40,12 @@ public class DataBaseCrawlerFunctions
 			{
 				currentRun = rs.getInt(1);				
 			}
+			dBConnects.close();
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();
 		}
+		
 	}
 	
 	public static Connection setMySQLDB()
@@ -87,7 +89,7 @@ public class DataBaseCrawlerFunctions
 				subDomains++;
 			}
 			out.close();
-			
+			dBConnects.close();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -116,6 +118,7 @@ public class DataBaseCrawlerFunctions
 
 			dBConnects.createStatement().executeUpdate("UPDATE Timing SET RunTime = " + (System.currentTimeMillis()-startTime)
 														+ " WHERE RunNumber=" + currentRun +";" );
+			dBConnects.close();
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();
@@ -136,14 +139,17 @@ public class DataBaseCrawlerFunctions
 			rs = st.executeQuery(statement);
 			if (rs.next()) {
 				total = rs.getInt("TotalTime")/1000;
+				dBConnects.close();
 				return ( total/60/60 )+ ":" + (total/60)%60 + ":" + (total%60%60);
 			}
-		
+			
+			dBConnects.close();
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();
 			
 		}
+		
 		return null;		
 	}
 
@@ -160,6 +166,7 @@ public class DataBaseCrawlerFunctions
 			rs = st.executeQuery(statement);
 			if (rs.next()) 
 				return rs.getInt("TotalCrawled");
+			dBConnects.close();
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();
@@ -184,6 +191,7 @@ public class DataBaseCrawlerFunctions
 				numOfWords[0] = rs.getInt("NumberOfWords");
 				return rs.getString("Url");
 			}
+			dBConnects.close();
 		} catch (SQLException e) 
 		{
 			e.printStackTrace();

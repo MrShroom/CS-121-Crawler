@@ -52,7 +52,7 @@ public class Crawler extends WebCrawler {
 	private final static int POLITENESS = 1200;
 	
 	//set Resumable in constant so that it's easy to change
-	private final static boolean RESUMABLE = false;
+	private final static boolean RESUMABLE = true;//DONT change! It will wipe DATABASE!!!!!(I already did it....)
 	
 	//Set of words to remove from BOW
 	private static HashSet<String> stopwords = new HashSet<String>();
