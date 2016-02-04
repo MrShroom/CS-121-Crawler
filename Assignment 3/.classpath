@@ -4,6 +4,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib"/>
 	<classpathentry kind="lib" path="lib/crawler4j-4.1-jar-with-dependencies.jar"/>
-	<classpathentry kind="lib" path="lib/slf4j-nop-1.7.14.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-jdk14-1.7.14.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.38-bin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

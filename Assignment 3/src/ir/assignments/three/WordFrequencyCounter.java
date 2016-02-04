@@ -2,24 +2,24 @@ package ir.assignments.three;
 
 import ir.assignments.three.Frequency;
 
+import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Counts the total number of words and their frequencies in a text file.
  */
 public final class WordFrequencyCounter {
 	
-	private	Map<String, Frequency> holder = new HashMap<String, Frequency>();//a Map to hold pairing of word to Frequency
-	
 	/**
-	 * This class should be instantiated.
+	 * This class not should be instantiated.
 	 */
-	public WordFrequencyCounter() {}
+	private WordFrequencyCounter() {}
 	
 	
 	/**
@@ -49,45 +49,62 @@ public final class WordFrequencyCounter {
 	 * @param words A list of words.
 	 * @return A list of word frequencies, ordered by decreasing frequency.
 	 */
-	public void addOrIncrementCounters(List<String> words) 
+	public static void addOrIncrementCounters(List<String> words, Connection dBConnects) 
 	{
-		
 		for(String word : words)
 		{
-			if(holder.containsKey(word))
+			String statement = "INSERT INTO WordFreq( Word, Freq) Value (\""+ word + "\",1)"+
+							" ON DUPLICATE KEY UPDATE  Freq = Freq + 1;";
+			try 
 			{
-				holder.get(word).incrementFrequency();
-			}
-			else
+				dBConnects.createStatement().executeUpdate(statement);
+			} catch (SQLException e) 
 			{
-				holder.put(word,  new Frequency(word,1));
+				e.printStackTrace();
 			}
+            
 		}
 	}
 
-
-	public List<Frequency> returnSortedCounts() {
-		
-		if(holder == null || holder.isEmpty())//handle empty lists
-			return new ArrayList<Frequency>();
-		
-		List<Frequency> output = new ArrayList<Frequency>( holder.values());
-		class FrequencyComparer implements Comparator<Frequency>
-		{
-			@Override
-			public int compare(Frequency o1, Frequency o2) 
+	public static List<Frequency> returnSortedCounts(Connection dBConnects) 
+	{
+		Statement st = null;
+        ResultSet rs = null;
+        String statement = " SELECT Word, Freq " +
+        					"FROM WordFreq "+
+        					"ORDER BY Freq DESC, Word LIMIT 500;";
+        List<Frequency> output = new ArrayList<Frequency>();
+        try {
+			st = dBConnects.createStatement();
+			rs = st.executeQuery(statement);
+			
+			while(rs.next())
 			{
-				if(o2.getFrequency() != o1.getFrequency())
-					return o2.getFrequency()-o1.getFrequency();
-				return o1.getText().compareTo(o2.getText());
+				output.add(new Frequency(rs.getString("Word"), rs.getInt("Freq")));
 			}
-		
-		}
-		Collections.sort(output,new FrequencyComparer ());//sort output 
-		
+			
+		} catch (SQLException e) 
+        {
+			e.printStackTrace();
+		}finally 
+        {
+            try {
+                if (rs != null) 
+                {
+                    rs.close();
+                }
+                if (st != null) 
+                {
+                    st.close();
+                }
+
+            } catch (SQLException ex) {
+                Logger lgr = Logger.getLogger(WordFrequencyCounter.class.getName());
+                lgr.log(Level.WARNING, ex.getMessage(), ex);
+            }
+        }   
 		return output;
 	}
-
 }
 
 

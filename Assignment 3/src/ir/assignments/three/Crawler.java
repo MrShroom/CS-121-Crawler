@@ -1,18 +1,12 @@
 package ir.assignments.three;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
@@ -36,25 +30,36 @@ public class Crawler extends WebCrawler {
 	 */
 		
 	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
-	private final static Pattern FILTERS = Pattern.compile(".*calendar.*"+
+	private final static Pattern FILTERS = Pattern.compile(".*calendar.*|duttgroup.ics.uci.edu"+
 											"|(.*(\\.(css|js|gif|jpe?g|png|mp2|mp3|zip|gz|exe|dll"+
 											"|bin|tar|pdf|mid|wav|avi|mov|mpeg|ram|m4v|rm|smil"+
 											"|wmv|swf|wma|rar|bmp|tiff?|pptx?|docx?|jemdoc|odp|ps|"+
-											"uai|thmx|xmlx?|mso|))$)");
+											"uai|thmx|xmlx?|mso|bx|tgz|7z|bzg))$)");
 	
-	private final static String CRAWL_STORAGE_FOLDER = "data";//path to to store data, made final for easy changing
-	private final static int NUMBER_OF_CRAWLERS = 1;//only need one crawler because we don't leave the ICS domain
-	private final static Pattern replaceRegexPattern = Pattern.compile("[^A-Za-z0-9]+");//Pre-compile Regex for small speed up
-	private final static Pattern singleQoute = Pattern.compile("\'|`");//Pre-compile Regex for small speed up
+	//path to to store data, made final for easy changing
+	private final static String CRAWL_STORAGE_FOLDER = "data";
 	
-	private static Set<String> hiturls; 
-	private static Map<String, Integer> subDomains;
-	private static WordFrequencyCounter myCounter;
+	//only need one crawler because we don't leave the ICS domain
+	private final static int NUMBER_OF_CRAWLERS =  Runtime.getRuntime().availableProcessors();
+	
+	//Pre-compile Regex for small speed up
+	private final static Pattern replaceRegexPattern = Pattern.compile("[^A-Za-z0-9]+");
+	
+	//Pre-compile Regex for small speed up
+	private final static Pattern singleQoute = Pattern.compile("\'|`");
+	
+	//set Politeness in constant so that it's easy to change
+	private final static int POLITENESS = 1200;
+	
+	//set Resumable in constant so that it's easy to change
+	private final static boolean RESUMABLE = false;
+	
+	//Set of words to remove from BOW
 	private static HashSet<String> stopwords = new HashSet<String>();
-	private static String mostWordsUrl = "None";
-	private static int bestWordCount = 0;
-	private static PrintWriter indexToUrl; 
-
+	
+	//private static Set<String> hiturls; 
+	private static long startTime; 
+	
 	public static void main(String [] args)
 	{
 		try 
@@ -66,40 +71,26 @@ public class Crawler extends WebCrawler {
 				stopwords.add(singleQoute.matcher(in.nextLine().trim().toLowerCase()).replaceAll(""));
 			}
 			stopwords.add("");
-			in.close();
+			in.close();			
 			
+			//get current start time
+			startTime = System.currentTimeMillis();
 			
-			long startTime = System.currentTimeMillis();
-			myCounter = new WordFrequencyCounter();
+			//move to next index of timing table or delete it. 
+			DataBaseCrawlerFunctions.recover(RESUMABLE);
 			
-			PrintWriter out = new PrintWriter("Visited.txt");
-			indexToUrl = new PrintWriter("UrlMapIndex.txt");
-			for(String s : crawl("http://www.ics.uci.edu"))
-			{
-				out.println(s);
-			}
-			out.close();
-			indexToUrl.close();
+			crawl("http://www.ics.uci.edu/");	
 			
-			out = new PrintWriter("Subdomains.txt");
-			ArrayList <String> keys = new ArrayList<String>(subDomains.keySet());
-			Collections.sort(keys);
-			for(String key : keys)
-			{
-				out.println(key + ", " + subDomains.get(key));
-			}
-			out.close();
-			
-			
-			out = new PrintWriter("answers.txt");
-			out.println("1. It took " + (System.currentTimeMillis()-startTime)/1000.0 + " seconds to crawl the domain." );
-			out.println("2. There are " + hiturls.size() + " unique url crawled in this domain." );
-			out.println("3. There are " + subDomains.size() + " unique subdomains crawled(see \"Subdomains.txt\").");
-			out.println("4. Longest Page: " + mostWordsUrl + " with " + bestWordCount + " words");
+			int numOfWords [] = new int[1];
+			PrintWriter out = new PrintWriter("answers.txt");
+			out.println("1. It took " + DataBaseCrawlerFunctions.getTotalTime() + " hours:minutes:seconds to crawl the domain." );
+			out.println("2. There are " + DataBaseCrawlerFunctions.getTotalCrawled() + " unique url crawled in this domain." );
+			out.println("3. There are " + DataBaseCrawlerFunctions.writeSubDomainsToFile() + " unique subdomains crawled(see \"Subdomains.txt\").");
+			out.println("4. Longest Page: " + DataBaseCrawlerFunctions.getLongestPage(numOfWords) + " with " + numOfWords[0] + " words");
 			out.println("5. Please see file\"CommonWords.txt\" ");
 			out.close();
 			
-			List<Frequency> sortedFreqCount = myCounter.returnSortedCounts();
+			List<Frequency> sortedFreqCount = WordFrequencyCounter.returnSortedCounts(DataBaseCrawlerFunctions.setMySQLDB());
 			out = new PrintWriter("CommonWords.txt");
 			
 			for(int i = 0; i< 500 && i < sortedFreqCount.size(); i++)
@@ -110,26 +101,26 @@ public class Crawler extends WebCrawler {
 		catch (Exception e) 
 		{
 			e.printStackTrace();
-		}
-		
-	}
+		}	
+	}	
+	
 	
 	//majority of code taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
-	public static Collection<String> crawl(String seedURL) throws Exception 
+	public static void crawl(String seedURL) throws Exception 
 	{
-		hiturls = new HashSet<String>();
-		subDomains = new HashMap<String, Integer>();
 
         CrawlConfig config = new CrawlConfig();
         config.setCrawlStorageFolder(CRAWL_STORAGE_FOLDER);
         
         //Specific Settings for Project
-        config.setPolitenessDelay(600);
+        config.setPolitenessDelay(POLITENESS);
         config.setUserAgentString("UCI Inf141-CS121 crawler 82425468 24073320 13828643");
         config.setMaxPagesToFetch(-1);
         config.setMaxDepthOfCrawling(32767);
         config.setIncludeBinaryContentInCrawling(false);
-        config.setResumableCrawling(false);
+        config.setResumableCrawling(RESUMABLE);
+        config.setSocketTimeout(60000);
+        config.setConnectionTimeout(120000);
         
         /*
          * Instantiate the controller for this crawl.
@@ -151,8 +142,7 @@ public class Crawler extends WebCrawler {
          * will reach the line after this only when crawling is finished.
          */
         controller.start(Crawler.class, NUMBER_OF_CRAWLERS);
-		
-		return hiturls;
+	
 	}
 
 
@@ -173,76 +163,49 @@ public class Crawler extends WebCrawler {
 		/** TODO DELETE DEBUG */ 
 		System.out.println("<!--- SITE TO VISIT " + href + " --->" + "AND BOOLEAN TOVISIT= " 
 		+ (!FILTERS.matcher(href).matches() && href.contains("ics.uci.edu") && href.contains("http://") 
-		&& !hiturls.contains(href)));
+		));
 		
 		return !FILTERS.matcher(href).matches()//skip file that match preset filters 
 				&& href.contains("ics.uci.edu")//stay in ics.uci.edu
-				&& href.contains("http://")//only follow http://(i.e.  avoid https, ftp, file,...)
-				&& !hiturls.contains(href);//skip seen sites. 
+				&& href.contains("http://")//only follow http://(i.e.  avoid https, ftp, file,...)				 
+				&& href.length() < 767 ;//smaller than max length for mysql key
 	}
 
 	/**
 	 * This function is called when a page is fetched and ready to be processed
 	 * by your program.
-	 */
-	
-	
-
-	
-	//taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
+	 * taken from https://www.ics.uci.edu/~djp3/classes/2014_01_INF141/Discussion/Discussion_03.pdf
+	 * then heavily edited
+	 */		
 	@Override
-	public void visit(Page page) {
-
+	public void visit(Page page) 
+	{
 		WebURL currentUrl = page.getWebURL();
 		System.out.println("############## Current URL!:: "+ currentUrl.getURL());
-		hiturls.add(currentUrl.getURL());
+		//hiturls.add(currentUrl.getURL());
 		String subDomain = currentUrl.getSubDomain();
 		
-		if(!subDomains.containsKey(subDomain))
-			subDomains.put(subDomain, 1);
-		else
-		{
-//			System.out.println(subDomain + " Hit! count :" +  (subDomains.get(subDomain)+1));
-			subDomains.put(subDomain, subDomains.get(subDomain)+1) ; 
-		}	
-
 		if (page.getParseData() instanceof HtmlParseData) 
 		{
-			try {
-				PrintWriter out = new PrintWriter("data/pageText/"+hiturls.size() + ".txt");
-				indexToUrl.println(hiturls.size() + "\t," + currentUrl.getURL());
-				indexToUrl.flush();
-				HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-				String text = htmlParseData.getText();
-				out.append(text);
-				int wordCount = tokenizeText(text);
-				if(wordCount > bestWordCount){
-					mostWordsUrl = currentUrl.getURL();
-					bestWordCount = wordCount;
-				}
-				out.close();
-			} catch (FileNotFoundException e) 
-			{
-				e.printStackTrace();
-			}
+			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
+			String text = htmlParseData.getText();
+			int wordCount = tokenizeText(text);
+			DataBaseCrawlerFunctions.writePageDataToDB(currentUrl.getURL(),subDomain, wordCount, htmlParseData ,startTime );			
 		}
-	
+		else
+		{
+			DataBaseCrawlerFunctions.writePageDataToDB(currentUrl.getURL(),subDomain, 0, null , startTime );	
+		}
 	}
 	
-	public static int tokenizeText(String input) {
+	public static int tokenizeText(String input) 
+	{
 		input = singleQoute.matcher(input).replaceAll("").trim();
 		input = replaceRegexPattern.matcher(input.toLowerCase()).replaceAll(" ").trim();//Change case to lower and remove all non word charters
 		ArrayList<String> tokens = new ArrayList<String>(Arrays.asList(input.split(" ")));//Create new Array list to hold tokens
 		int ctr = tokens.size();
 		tokens.removeAll(stopwords);
-//		for(String s : input.split(" ")){
-//			if(s.length()<=0)
-//				continue;
-//			++ctr;
-//			if(!stopwords.contains(s))
-//				tokens.add(s);
-//		}
-		myCounter.addOrIncrementCounters(tokens);
+		WordFrequencyCounter.addOrIncrementCounters(tokens,DataBaseCrawlerFunctions.setMySQLDB());
 		return ctr;
 	}
 }
