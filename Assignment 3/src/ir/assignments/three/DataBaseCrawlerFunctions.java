@@ -15,7 +15,24 @@ public class DataBaseCrawlerFunctions
 {
 	
 	private static int currentRun;
+	
+	public static Connection setMySQLDB()
+	{
+		String url = "jdbc:mysql://shaunmcthomas.me:3306/cs121DB";
+		String user = "dbuser";
+        String password = "password";
+        Connection dBConnects = null;
+        try {
+        	dBConnects = DriverManager.getConnection(url, user, password);
+        	
+        } catch (SQLException ex) {
+            Logger lgr = Logger.getLogger(Crawler.class.getName());
+            lgr.log(Level.SEVERE, ex.getMessage(), ex);
 
+        }
+        return dBConnects;
+	}
+	
 	public static void recover(boolean resumable)
 	{
 		Connection dBConnects = setMySQLDB();
@@ -47,22 +64,30 @@ public class DataBaseCrawlerFunctions
 		}
 		
 	}
-	
-	public static Connection setMySQLDB()
-	{
-		String url = "jdbc:mysql://shaunmcthomas.me:3306/cs121DB";
-		String user = "dbuser";
-        String password = "password";
-        Connection dBConnects = null;
-        try {
-        	dBConnects = DriverManager.getConnection(url, user, password);
-        	
-        } catch (SQLException ex) {
-            Logger lgr = Logger.getLogger(Crawler.class.getName());
-            lgr.log(Level.SEVERE, ex.getMessage(), ex);
 
-        }
-        return dBConnects;
+	public static void writePageDataToDB(String url, String subDomain, int numberOfWords, HtmlParseData htmlParseData, long startTime )
+	{
+		Connection dBConnects = setMySQLDB();
+		
+		String statement = "INSERT INTO Visited_URL (Url, SubDomain, NumberOfWords, WebText, Html )" +
+							" VALUES ( ?, ?, " + numberOfWords + ", ?, ? );";
+		try
+		{
+			java.sql.PreparedStatement preparedStatement = dBConnects.prepareStatement(statement);
+			preparedStatement.setString(1, url);
+			preparedStatement.setString(2, subDomain);
+			preparedStatement.setString(3, htmlParseData.getText());
+			preparedStatement.setString(4, htmlParseData.getHtml());
+			preparedStatement.executeUpdate();
+
+			dBConnects.createStatement().executeUpdate("UPDATE Timing SET RunTime = " + (System.currentTimeMillis()-startTime)
+														+ " WHERE RunNumber=" + currentRun +";" );
+			dBConnects.close();
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public static int writeSubDomainsToFile()
@@ -100,32 +125,6 @@ public class DataBaseCrawlerFunctions
         return subDomains;
         
 	}
-	
-	public static void writePageDataToDB(String url, String subDomain, int numberOfWords, HtmlParseData htmlParseData, long startTime )
-	{
-		Connection dBConnects = setMySQLDB();
-		
-		String statement = "INSERT INTO Visited_URL (Url, SubDomain, NumberOfWords, WebText, Html )" +
-							" VALUES ( ?, ?, " + numberOfWords + ", ?, ? );";
-		try
-		{
-			java.sql.PreparedStatement preparedStatement = dBConnects.prepareStatement(statement);
-			preparedStatement.setString(1, url);
-			preparedStatement.setString(2, subDomain);
-			preparedStatement.setString(3, htmlParseData.getText());
-			preparedStatement.setString(4, htmlParseData.getHtml());
-			preparedStatement.executeUpdate();
-
-			dBConnects.createStatement().executeUpdate("UPDATE Timing SET RunTime = " + (System.currentTimeMillis()-startTime)
-														+ " WHERE RunNumber=" + currentRun +";" );
-			dBConnects.close();
-		} catch (SQLException e) 
-		{
-			e.printStackTrace();
-		}
-		
-	}
-	
 	public static String getTotalTime()
 	{
 		Connection dBConnects = setMySQLDB();

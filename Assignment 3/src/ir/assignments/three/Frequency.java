@@ -1,9 +1,9 @@
 package ir.assignments.three;
 
 /**
- * Basic class for pairing a word/2-gram/palindrome with its frequency.
- * 
- * DO NOT MODIFY THIS CLASS
+ * Based on Basic class for pairing a word/2-gram/palindrome with its frequency
+ * from assignment 1
+ *
  */
 public final class Frequency {
 	private final String word;
@@ -33,6 +33,6 @@ public final class Frequency {
 	
 	@Override
 	public String toString() {
-		return word + ":" + frequency;
+		return word + "\t\t\t:" + frequency;
 	}
 }

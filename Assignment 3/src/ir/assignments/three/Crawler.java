@@ -1,11 +1,9 @@
 package ir.assignments.three;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -81,21 +79,7 @@ public class Crawler extends WebCrawler {
 			
 			crawl("http://www.ics.uci.edu/");	
 			
-			int numOfWords [] = new int[1];
-			PrintWriter out = new PrintWriter("answers.txt");
-			out.println("1. It took " + DataBaseCrawlerFunctions.getTotalTime() + " hours:minutes:seconds to crawl the domain." );
-			out.println("2. There are " + DataBaseCrawlerFunctions.getTotalCrawled() + " unique url crawled in this domain." );
-			out.println("3. There are " + DataBaseCrawlerFunctions.writeSubDomainsToFile() + " unique subdomains crawled(see \"Subdomains.txt\").");
-			out.println("4. Longest Page: " + DataBaseCrawlerFunctions.getLongestPage(numOfWords) + " with " + numOfWords[0] + " words");
-			out.println("5. Please see file\"CommonWords.txt\" ");
-			out.close();
-			
-			List<Frequency> sortedFreqCount = WordFrequencyCounter.returnSortedCounts(DataBaseCrawlerFunctions.setMySQLDB());
-			out = new PrintWriter("CommonWords.txt");
-			
-			for(int i = 0; i< 500 && i < sortedFreqCount.size(); i++)
-				out.println(sortedFreqCount.get(i).toString().replaceAll(",", "\n").replace("[", "").replace("]", ""));
-			out.close();
+			generateCurrentReports.generateNow();
 		
 		} 
 		catch (Exception e) 

@@ -69,11 +69,21 @@ public final class WordFrequencyCounter {
 
 	public static List<Frequency> returnSortedCounts(Connection dBConnects) 
 	{
+		return returnSortedCounts(dBConnects, false);
+	
+	}
+	
+	public static List<Frequency> returnSortedCounts(Connection dBConnects, boolean removeNumbers) 
+	{
 		Statement st = null;
         ResultSet rs = null;
         String statement = " SELECT Word, Freq " +
-        					"FROM WordFreq "+
-        					"ORDER BY Freq DESC, Word LIMIT 500;";
+        					"FROM WordFreq ";
+        if(removeNumbers)
+        	statement += " Where Word NOT REGEXP '^[0-9]+'";
+        	
+        statement += "ORDER BY Freq DESC, Word LIMIT 500;";
+        
         List<Frequency> output = new ArrayList<Frequency>();
         try {
 			st = dBConnects.createStatement();
