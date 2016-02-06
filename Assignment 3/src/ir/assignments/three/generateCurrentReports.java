@@ -19,10 +19,10 @@ public class generateCurrentReports {
 			PrintWriter out;
 			out = new PrintWriter("answers.txt");
 			out.println("1. It took " + DataBaseCrawlerFunctions.getTotalTime() + " hours:minutes:seconds to crawl the domain." );
-			out.println("2. There are " + DataBaseCrawlerFunctions.getTotalCrawled() + " unique url crawled in this domain." );
-			out.println("3. There are " + DataBaseCrawlerFunctions.writeSubDomainsToFile() + " unique subdomains crawled(see \"Subdomains.txt\").");
+			out.println("2. There were " + DataBaseCrawlerFunctions.getTotalCrawled() + " unique url crawled in this domain." );
+			out.println("3. There were " + DataBaseCrawlerFunctions.writeSubDomainsToFile() + " unique subdomains crawled(see \"Subdomains.txt\").");
 			out.println("4. Longest Page: " + DataBaseCrawlerFunctions.getLongestPage(numOfWords) + " with " + numOfWords[0] + " words");
-			out.println("5. Please see file\"CommonWords.txt\" ");
+			out.println("5. Please see file\"CommonWords.txt\" and \"CommonWordsWithoutNumbers.txt\".");
 			out.close();
 			
 			List<Frequency> sortedFreqCount = WordFrequencyCounter.returnSortedCounts(DataBaseCrawlerFunctions.setMySQLDB());

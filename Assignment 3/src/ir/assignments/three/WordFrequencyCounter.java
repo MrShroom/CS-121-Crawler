@@ -50,21 +50,21 @@ public final class WordFrequencyCounter {
 	 * @return A list of word frequencies, ordered by decreasing frequency.
 	 */
 	public static void addOrIncrementCounters(List<String> words, Connection dBConnects) 
-	{
-		for(String word : words)
-		{
-			String statement = "INSERT INTO WordFreq( Word, Freq) Value (\""+ word + "\",1)"+
-							" ON DUPLICATE KEY UPDATE  Freq = Freq + 1;";
+	{		
 			try 
-			{
-				dBConnects.createStatement().executeUpdate(statement);
+			{				
+				for(String word : words)
+				{
+					String statement = "INSERT INTO WordFreq( Word, Freq) Value (\""+ word + "\",1)"+
+							" ON DUPLICATE KEY UPDATE  Freq = Freq + 1;";
+					dBConnects.createStatement().executeUpdate(statement);
+				}
 				dBConnects.close();
 			} catch (SQLException e) 
 			{
 				e.printStackTrace();
-			}
-            
-		}
+			}            
+		
 	}
 
 	public static List<Frequency> returnSortedCounts(Connection dBConnects) 

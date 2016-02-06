@@ -32,7 +32,7 @@ public class Crawler extends WebCrawler {
 											"|(.*(\\.(css|js|gif|jpe?g|png|mp2|mp3|zip|gz|exe|dll"+
 											"|bin|tar|pdf|mid|wav|avi|mov|mpeg|ram|m4v|rm|smil"+
 											"|wmv|swf|wma|rar|bmp|tiff?|pptx?|docx?|jemdoc|odp|ps|"+
-											"uai|thmx|xmlx?|mso|bx|tgz|7z|bzg))$)");
+											"uai|thmx|xmlx?|mso|bx|tgz|7z|bzg|mat))$)");
 	
 	//path to to store data, made final for easy changing
 	private final static String CRAWL_STORAGE_FOLDER = "data";
@@ -152,9 +152,10 @@ public class Crawler extends WebCrawler {
 		return !FILTERS.matcher(href).matches()//skip file that match preset filters 
 				&& href.contains("ics.uci.edu")//stay in ics.uci.edu
 				&& href.contains("http://")//only follow http://(i.e.  avoid https, ftp, file,...)				 
-				&& href.length() < 767 ;//smaller than max length for mysql key
+				&& href.length() < 767 //smaller than max length for mysql key
+				&& !DataBaseCrawlerFunctions.checkifPageWasSeen(href);//url not in DB
 	}
-
+	
 	/**
 	 * This function is called when a page is fetched and ready to be processed
 	 * by your program.

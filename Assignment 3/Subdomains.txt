@@ -1,4 +1,4 @@
-archive.ics, 30742
+archive.ics, 31850
 asterix.ics, 27
 asterixdb.ics, 26
 auge.ics, 16
@@ -36,7 +36,7 @@ luci.ics, 1493
 malek.ics, 1
 mlearn.ics, 467
 mondego.ics, 50
-ngs.ics, 173
+ngs.ics, 174
 pregelix.ics, 12
 psearch.ics, 3
 radicle.ics, 1
@@ -49,13 +49,13 @@ sherlock.ics, 7
 sli.ics, 156
 soc.ics, 593
 sourcerer.ics, 2
-sprout.ics, 16
+sprout.ics, 19
 tastier.ics, 1
 vision.ics, 177
 wics.ics, 5801
 wildhog.ics, 1
 woda15.ics, 1
 www-db.ics, 24
-www.ics, 4496
+www.ics, 4506
 www.informatics, 51
 xtune.ics, 6

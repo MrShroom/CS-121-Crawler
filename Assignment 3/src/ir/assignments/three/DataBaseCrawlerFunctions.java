@@ -173,6 +173,7 @@ public class DataBaseCrawlerFunctions
 		}
 		return 0;		
 	}
+	
 	public static String getLongestPage(int[] numOfWords)
 	{
 		Connection dBConnects = setMySQLDB();
@@ -197,6 +198,29 @@ public class DataBaseCrawlerFunctions
 			
 		}
 		return null;		
+	}
+	
+	public static boolean checkifPageWasSeen(String url)
+	{
+		Connection dBConnects = setMySQLDB();
+		Statement st = null;
+	    ResultSet rs = null;
+		String statement = " SELECT EXISTS(SELECT * FROM Visited_URL WHERE url =\'" + url +"\');";
+		
+		try
+		{			
+			st = dBConnects.createStatement();
+			rs = st.executeQuery(statement);
+			if (rs.next()) {
+				return rs.getBoolean(1);
+			}
+			dBConnects.close();
+		} catch (SQLException e) 
+		{
+			e.printStackTrace();
+			
+		}
+		return false;		
 	}
 	
 }
