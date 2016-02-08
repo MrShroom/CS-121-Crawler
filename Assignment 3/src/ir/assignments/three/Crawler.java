@@ -152,8 +152,8 @@ public class Crawler extends WebCrawler {
 		return !FILTERS.matcher(href).matches()//skip file that match preset filters 
 				&& href.contains("ics.uci.edu")//stay in ics.uci.edu
 				&& href.contains("http://")//only follow http://(i.e.  avoid https, ftp, file,...)				 
-				&& href.length() < 767 //smaller than max length for mysql key
-				&& !DataBaseCrawlerFunctions.checkifPageWasSeen(href);//url not in DB
+				&& href.length() < 767; //smaller than max length for mysql key
+				
 	}
 	
 	/**
@@ -165,7 +165,12 @@ public class Crawler extends WebCrawler {
 	@Override
 	public void visit(Page page) 
 	{
+		
 		WebURL currentUrl = page.getWebURL();
+		
+		if(DataBaseCrawlerFunctions.checkifPageWasSeen(currentUrl.getURL()))
+			return;
+		
 		System.out.println("############## Current URL!:: "+ currentUrl.getURL());
 		//hiturls.add(currentUrl.getURL());
 		String subDomain = currentUrl.getSubDomain();
