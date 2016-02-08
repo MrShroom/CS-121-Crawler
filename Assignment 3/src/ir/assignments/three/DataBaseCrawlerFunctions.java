@@ -1,3 +1,8 @@
+/** 
+* Shaun McThomas 13828643
+ * Sean Letzer 24073320
+ * Sean King 82425468 
+ */
 package ir.assignments.three;
 
 import java.io.FileNotFoundException;

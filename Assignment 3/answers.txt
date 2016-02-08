@@ -1,3 +1,9 @@
+/** 
+* Shaun McThomas 13828643
+* Sean Letzer 24073320
+* Sean King 82425468 
+*/
+ 
 1. It took 35:2:36 hours:minutes:seconds to crawl the domain.
 2. There were 50338 unique url crawled in this domain.
 3. There were 65 unique subdomains crawled(see "Subdomains.txt").

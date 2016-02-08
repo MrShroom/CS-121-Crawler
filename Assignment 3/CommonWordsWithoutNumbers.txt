@@ -1,3 +1,8 @@
+/** 
+* Shaun McThomas 13828643
+* Sean Letzer 24073320
+* Sean King 82425468 
+*/
 data			:209708
 classification			:191669
 wics			:178738

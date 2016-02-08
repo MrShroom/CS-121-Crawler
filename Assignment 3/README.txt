@@ -1,3 +1,8 @@
+/** 
+* Shaun McThomas 13828643
+* Sean Letzer 24073320
+* Sean King 82425468 
+*/
 Some assumptions made:
 1.	The time to crawl includes some text processing time, therefore this measurement is not that accurate. 
 2.	The Unique URLs crawled do not include any URL that was skipped for any reason (e.g. filtered out by file extension).
